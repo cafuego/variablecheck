@@ -90,12 +90,11 @@ function variablecheck_check_variables_page() {
     $output = format_plural($count,
         'You will want to either remove this entry or let the module developer know there is a problem with their module.',
         'You will want to either remove these entries or let the module developer know there is a problem with their module.');
+    $output .= theme('table', $variables);
   }
   else {
-    drupal_set_message(t('Checked @count variables', array('@count' => count($entries))));
     $output = t('No invalid entries were found in the variable table.');
   }
 
-  $output .= theme('table', $variables);
   return $output;
 }
