@@ -1,15 +1,9 @@
 <?php
 /**
- * Implementation of hook_permission()
+ * Implementation of hook_perm()
  */
-function variablecheck_permission() {
-  return array(
-    'check variables' => array(
-      'title' => t('Check System Variables'),
-      'description' => t('Check the validity of settings in the variable table.'),
-      'restrict access' => TRUE,
-    ),
-  );
+function variablecheck_perm() {
+  return array('check system variables');
 }
 
 /**
@@ -20,7 +14,7 @@ function variablecheck_menu() {
     'title' => 'Check System Variables',
     'description' => 'Check the validity of settings in the variable table.',
     'page callback' => 'variablecheck_check_variables_page',
-    'access arguments' => array('check variables'),
+    'access arguments' => array('check system variables'),
   );
   return $items;
 }
@@ -46,15 +40,12 @@ function variablecheck_requirements($phase) {
  * Helper that returs a list of invalid variables and their values.
  */
 function variablecheck_check_variables() {
-  $select = db_select('variable', 'v')
-              ->fields('v', array('name', 'value'))
-              ->orderBy('name', 'ASC')
-              ->comment('Load all variables')
-              ->execute();
-  $entries = $select->fetchAll();
+  $rows = null;
+
+  $result = db_query("SELECT name, value FROM {variable} ORDER BY name ASC");
 
   // Test each entry for validity.
-  foreach ($entries as $entry) {
+  while ($entry = db_fetch_object($result)) {
     // Suppress the notice.
     $value = @unserialize($entry->value);
 
@@ -75,27 +66,24 @@ function variablecheck_check_variables() {
 function variablecheck_check_variables_page() {
 
   // Load the naughty variables.
-  $variables = array(
-    'header' => array(
-      t('Name'),
-      t('Value')
-    ),
-    'rows' => variablecheck_check_variables(),
+  $header = array(
+    t('Name'),
+    t('Value'),
   );
+  $rows = variablecheck_check_variables();
 
   drupal_set_title(t('Invalid Variables'));
 
-  if ($count = count($variables['rows'])) {
+  if ($count = count($rows)) {
     drupal_set_message(format_plural($count, 'Found one invalid entry', 'Found @count invalid entries'), 'error');
     $output = format_plural($count,
         'You will want to either remove this entry or let the module developer know there is a problem with their module.',
         'You will want to either remove these entries or let the module developer know there is a problem with their module.');
+    $output .= theme('table', $header, $rows);
   }
   else {
-    drupal_set_message(t('Checked @count variables', array('@count' => count($entries))));
     $output = t('No invalid entries were found in the variable table.');
   }
 
-  $output .= theme('table', $variables);
   return $output;
 }
