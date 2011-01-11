@@ -46,6 +46,8 @@ function variablecheck_requirements($phase) {
  * Helper that returs a list of invalid variables and their values.
  */
 function variablecheck_check_variables() {
+  $rows = null;
+
   $select = db_select('variable', 'v')
               ->fields('v', array('name', 'value'))
               ->orderBy('name', 'ASC')
